@@ -20,7 +20,7 @@
 
 **NuvioWebOS** is the lightweight LG webOS wrapper for the hosted Nuvio TV web app.
 
-It is not the main application source code. This repository only contains the small packaged launcher that opens the hosted TV experience.
+It is not the main application source code. This repository contains the packaged launcher that opens the hosted TV experience plus the local webOS companion service used for media helpers such as subtitle track probing.
 
 ## Install
 
@@ -30,5 +30,6 @@ It is not the main application source code. This repository only contains the sm
 ## For Developers
 
 - Main shared app source: `NuvioMedia/NuvioWeb`
-- This wrapper repo stays intentionally small and only handles webOS packaging and launch behavior
-- If you want to inspect or modify the wrapper locally, update `appinfo.json`, `index.html`, and `main.js`
+- This wrapper repo stays intentionally small and only handles webOS packaging, launch behavior, and the local `space.nuvio.webos.service`
+- If you want to inspect or modify the wrapper locally, update `appinfo.json`, `index.html`, `main.js`, and `services/space.nuvio.webos.service`
+- Package with `ares-package . services/space.nuvio.webos.service`

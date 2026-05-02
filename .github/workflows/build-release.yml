@@ -61,7 +61,7 @@ jobs:
 
       - name: Package IPK
         if: ${{ steps.mode.outputs.rebuild == 'true' }}
-        run: npm exec --yes --package @webos-tools/cli@3.2.2 -- ares-package .
+        run: npm exec --yes --package @webos-tools/cli@3.2.2 -- ares-package . services/space.nuvio.webos.service
 
       - name: Normalize IPK asset name
         run: |
