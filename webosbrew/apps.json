@@ -12,18 +12,18 @@
       "iconUri": "https://raw.githubusercontent.com/NuvioMedia/NuvioWebOS/main/icon.png",
       "manifest": {
         "id": "space.nuvio.webos",
-        "version": "0.1.5",
+        "version": "0.1.6",
         "type": "web",
         "title": "Nuvio TV",
         "appDescription": "Hosted LG webOS wrapper for Nuvio TV.",
         "iconUri": "https://raw.githubusercontent.com/NuvioMedia/NuvioWebOS/main/icon.png",
         "sourceUrl": "https://github.com/NuvioMedia/NuvioWeb",
         "rootRequired": false,
-        "ipkUrl": "https://github.com/NuvioMedia/NuvioWeb/releases/download/0.1.5/NuvioTV-webOS-0.1.5.ipk",
+        "ipkUrl": "https://github.com/NuvioMedia/NuvioWeb/releases/download/0.1.6/NuvioTV-webOS-0.1.6.ipk",
         "ipkHash": {
-          "sha256": "8da468a726fb932b20ecd1d021f8530d5fe5ff68c9717d24e42d3488bdd7269d"
+          "sha256": "138b60308f102994784056e07bcdc87f7e13a542252e3f15fdab484c37b76263"
         },
-        "ipkSize": 3143556
+        "ipkSize": 3143534
       },
       "pool": "main",
       "shortDescription": "Hosted LG webOS wrapper for Nuvio TV."
