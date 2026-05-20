@@ -66,8 +66,16 @@ jobs:
       - name: Normalize IPK asset name
         run: |
           VERSION="${SOURCE_TAG#v}"
-          PACKAGE_FILE=$(ls *.ipk)
           TARGET_FILE="space.nuvio.webos_${VERSION}_all.ipk"
+          if [ -f "$TARGET_FILE" ]; then
+            echo "IPK already normalized as $TARGET_FILE"
+            exit 0
+          fi
+          PACKAGE_FILE=$(find . -maxdepth 1 -name '*.ipk' -type f | head -n 1)
+          if [ -z "$PACKAGE_FILE" ]; then
+            echo "No IPK found to normalize"
+            exit 1
+          fi
           rm -f "$TARGET_FILE"
           mv "$PACKAGE_FILE" "$TARGET_FILE"
 
