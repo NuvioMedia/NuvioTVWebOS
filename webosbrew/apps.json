@@ -19,7 +19,7 @@
         "iconUri": "https://raw.githubusercontent.com/NuvioMedia/NuvioWebOS/main/icon.png",
         "sourceUrl": "https://github.com/NuvioMedia/NuvioWeb",
         "rootRequired": false,
-        "ipkUrl": "https://github.com/NuvioMedia/NuvioWeb/releases/download/0.1.7/space.nuvio.webos_0.1.7_all.ipk",
+        "ipkUrl": "https://github.com/NuvioMedia/NuvioWeb/releases/download/0.1.7/NuvioTV-webOS-0.1.7.ipk",
         "ipkHash": {
           "sha256": "48e60d8de1d7b61182d6491035bd8b384721a3b57db6a252cf1eabeefd2fd0ce"
         },

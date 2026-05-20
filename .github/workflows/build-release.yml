@@ -36,7 +36,7 @@ jobs:
           fi
 
           PREVIOUS_TAG=$(gh release list --repo "$SOURCE_REPO" --exclude-drafts --exclude-pre-releases --limit 20 --json tagName | node -e "const fs=require('fs');const releases=JSON.parse(fs.readFileSync(0,'utf8'));const current=process.env.SOURCE_TAG;const match=releases.find((release)=>release.tagName!==current);if(!match){process.exit(1)};process.stdout.write(match.tagName);" 2>/dev/null || true)
-          if [ -n "$PREVIOUS_TAG" ] && gh release download "$PREVIOUS_TAG" --repo "$SOURCE_REPO" --pattern "space.nuvio.webos_*_all.ipk" --dir .; then
+          if [ -n "$PREVIOUS_TAG" ] && gh release download "$PREVIOUS_TAG" --repo "$SOURCE_REPO" --pattern "NuvioTV-webOS-*.ipk" --dir .; then
             echo "rebuild=false" >> "$GITHUB_OUTPUT"
           else
             echo "No previous reusable webOS IPK found; rebuilding wrapper"
@@ -66,7 +66,7 @@ jobs:
       - name: Normalize IPK asset name
         run: |
           VERSION="${SOURCE_TAG#v}"
-          TARGET_FILE="space.nuvio.webos_${VERSION}_all.ipk"
+          TARGET_FILE="NuvioTV-webOS-${VERSION}.ipk"
           if [ -f "$TARGET_FILE" ]; then
             echo "IPK already normalized as $TARGET_FILE"
             exit 0
@@ -82,10 +82,10 @@ jobs:
       - name: Refresh Homebrew repository metadata
         run: |
           VERSION="${SOURCE_TAG#v}"
-          TARGET_FILE="space.nuvio.webos_${VERSION}_all.ipk"
+          TARGET_FILE="NuvioTV-webOS-${VERSION}.ipk"
           SHA256=$(shasum -a 256 "$TARGET_FILE" | cut -d' ' -f1)
           SIZE=$(wc -c < "$TARGET_FILE" | tr -d ' ')
-          SOURCE_TAG="$SOURCE_TAG" SHA256="$SHA256" SIZE="$SIZE" VERSION="$VERSION" REBUILD_WEBOS="${{ steps.mode.outputs.rebuild }}" node -e "const fs=require('fs');const file='webosbrew/apps.json';const data=JSON.parse(fs.readFileSync(file,'utf8'));const pkg=data.packages[0];if(process.env.REBUILD_WEBOS==='true'){pkg.manifest.version=process.env.VERSION;}pkg.manifest.ipkUrl='https://github.com/NuvioMedia/NuvioWeb/releases/download/'+process.env.SOURCE_TAG+'/space.nuvio.webos_'+process.env.VERSION+'_all.ipk';pkg.manifest.ipkHash.sha256=process.env.SHA256;pkg.manifest.ipkSize=Number(process.env.SIZE);fs.writeFileSync(file, JSON.stringify(data, null, 2)+'\n');"
+          SOURCE_TAG="$SOURCE_TAG" SHA256="$SHA256" SIZE="$SIZE" VERSION="$VERSION" REBUILD_WEBOS="${{ steps.mode.outputs.rebuild }}" node -e "const fs=require('fs');const file='webosbrew/apps.json';const data=JSON.parse(fs.readFileSync(file,'utf8'));const pkg=data.packages[0];if(process.env.REBUILD_WEBOS==='true'){pkg.manifest.version=process.env.VERSION;}pkg.manifest.ipkUrl='https://github.com/NuvioMedia/NuvioWeb/releases/download/'+process.env.SOURCE_TAG+'/NuvioTV-webOS-'+process.env.VERSION+'.ipk';pkg.manifest.ipkHash.sha256=process.env.SHA256;pkg.manifest.ipkSize=Number(process.env.SIZE);fs.writeFileSync(file, JSON.stringify(data, null, 2)+'\n');"
 
       - name: Commit repository metadata update
         run: |
@@ -106,4 +106,4 @@ jobs:
           GH_TOKEN: ${{ secrets.MAIN_REPO_RELEASE_TOKEN }}
         run: |
           VERSION="${SOURCE_TAG#v}"
-          gh release upload "$SOURCE_TAG" "space.nuvio.webos_${VERSION}_all.ipk" --repo "$SOURCE_REPO" --clobber
+          gh release upload "$SOURCE_TAG" "NuvioTV-webOS-${VERSION}.ipk" --repo "$SOURCE_REPO" --clobber
