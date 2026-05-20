@@ -21,9 +21,9 @@
         "rootRequired": false,
         "ipkUrl": "https://github.com/NuvioMedia/NuvioWeb/releases/download/0.1.7/NuvioTV-webOS-0.1.7.ipk",
         "ipkHash": {
-          "sha256": "48e60d8de1d7b61182d6491035bd8b384721a3b57db6a252cf1eabeefd2fd0ce"
+          "sha256": "468c68f09f824d606d12254d3e49845e0c60423a0618e3baf3a5c47673c5d158"
         },
-        "ipkSize": 2286542
+        "ipkSize": 3144064
       },
       "pool": "main",
       "shortDescription": "Hosted LG webOS wrapper for Nuvio TV."
