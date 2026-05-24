@@ -2,8 +2,12 @@ var path = require("path");
 
 var serverHost = require("./serverHost");
 var SERVICE_ID = serverHost.SERVICE_ID;
+var HEALTH_REQUEST_TIMEOUT_MS = serverHost.HEALTH_REQUEST_TIMEOUT_MS;
+var TRACK_REQUEST_TIMEOUT_MS = serverHost.TRACK_REQUEST_TIMEOUT_MS;
+var READY_WAIT_TIMEOUT_MS = serverHost.READY_WAIT_TIMEOUT_MS;
+var READY_POLL_INTERVAL_MS = serverHost.READY_POLL_INTERVAL_MS;
 var bootLocalRuntime = serverHost.bootLocalRuntime;
-var probeLocalServer = serverHost.probeLocalServer;
+var waitForLocalServer = serverHost.waitForLocalServer;
 var requestActiveServerPath = serverHost.requestActiveServerPath;
 
 var RUNTIME_PATH = path.resolve(__dirname, "..", "runtime", "media-http.cjs");
@@ -25,7 +29,10 @@ var service = createService();
 var runtimeState = {
   booted: false,
   bootTimestamp: null,
-  error: null
+  error: null,
+  ready: false,
+  readyTimestamp: null,
+  readyPort: null
 };
 
 function ensureRuntimeStarted() {
@@ -57,12 +64,28 @@ function respond(message, payload) {
   console.log("[" + SERVICE_ID + "] response:", JSON.stringify(payload));
 }
 
+function markRuntimeReady(status) {
+  if (!status || !status.port) {
+    return;
+  }
+
+  runtimeState.ready = true;
+  runtimeState.readyPort = status.port;
+
+  if (!runtimeState.readyTimestamp) {
+    runtimeState.readyTimestamp = new Date().toISOString();
+  }
+}
+
 function buildBasePayload() {
   return {
     returnValue: !runtimeState.error,
     serviceId: SERVICE_ID,
     booted: runtimeState.booted,
     bootTimestamp: runtimeState.bootTimestamp,
+    ready: runtimeState.ready,
+    readyTimestamp: runtimeState.readyTimestamp,
+    readyPort: runtimeState.readyPort,
     runtimePath: RUNTIME_PATH,
     error: runtimeState.error
   };
@@ -83,28 +106,104 @@ function getMessagePayload(message) {
   return {};
 }
 
+function buildServerStatusPayload(status, includeBody, warning) {
+  if (status) {
+    markRuntimeReady(status);
+  }
+
+  return Object.assign(buildBasePayload(), {
+    url: status ? "http://127.0.0.1:" + status.port : null,
+    settingsReachable: Boolean(status),
+    settingsStatusCode: status ? status.statusCode : null,
+    heartbeatStatusCode: status ? status.heartbeatStatusCode || null : null,
+    settingsBody: includeBody && status ? status.body : null,
+    warning: warning || null
+  });
+}
+
+function buildTracksFallbackPayload(error, tracksPath, status, extras) {
+  var message = String(error && error.message ? error.message : error || "Track probe unavailable");
+
+  if (status) {
+    markRuntimeReady(status);
+  }
+
+  return Object.assign(buildBasePayload(), {
+    returnValue: true,
+    error: null,
+    degraded: true,
+    warning: message,
+    url: status && status.port ? "http://127.0.0.1:" + status.port : null,
+    proxiedPath: tracksPath,
+    statusCode: status && status.statusCode ? status.statusCode : null,
+    tracks: [],
+    runtimeError: runtimeState.error
+  }, extras || {});
+}
+
 function registerCommand(commandName, includeBody) {
   service.register(commandName, function(message) {
     ensureRuntimeStarted();
-    probeLocalServer(function(_, status) {
-      respond(message, Object.assign(buildBasePayload(), {
-        url: status ? "http://127.0.0.1:" + status.port : null,
-        settingsReachable: Boolean(status),
-        settingsStatusCode: status ? status.statusCode : null,
-        settingsBody: includeBody && status ? status.body : null
-      }));
-    });
+
+    waitForLocalServer(
+      {
+        timeoutMs: HEALTH_REQUEST_TIMEOUT_MS,
+        readyTimeoutMs: READY_WAIT_TIMEOUT_MS,
+        pollIntervalMs: READY_POLL_INTERVAL_MS
+      },
+      function(error, status) {
+        respond(
+          message,
+          buildServerStatusPayload(status, includeBody, error ? String(error && error.message ? error.message : error) : null)
+        );
+      }
+    );
   });
+}
+
+function parseTracksResponse(text) {
+  try {
+    var parsed = JSON.parse(text || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    return null;
+  }
+}
+
+function respondWithTracks(message, tracksPath, trackStatus, readyStatus) {
+  var status = trackStatus || readyStatus;
+  var tracks = parseTracksResponse(trackStatus && trackStatus.body);
+
+  if (!trackStatus || trackStatus.statusCode < 200 || trackStatus.statusCode >= 300) {
+    var statusCode = trackStatus ? trackStatus.statusCode || 0 : 0;
+    respond(message, buildTracksFallbackPayload("Track request failed with HTTP " + statusCode, tracksPath, status, {
+      rawBody: trackStatus ? trackStatus.body || "" : ""
+    }));
+    return;
+  }
+
+  if (tracks === null) {
+    respond(message, buildTracksFallbackPayload("Track response was not valid JSON", tracksPath, status, {
+      rawBody: trackStatus.body || ""
+    }));
+    return;
+  }
+
+  if (status) {
+    markRuntimeReady(status);
+  }
+
+  respond(message, Object.assign(buildBasePayload(), {
+    url: status && status.port ? "http://127.0.0.1:" + status.port : null,
+    proxiedPath: tracksPath,
+    statusCode: trackStatus.statusCode,
+    tracks: tracks
+  }));
 }
 
 function registerTracksCommand() {
   service.register("tracks", function(message) {
     ensureRuntimeStarted();
-
-    if (runtimeState.error) {
-      respond(message, buildErrorPayload(runtimeState.error));
-      return;
-    }
 
     var mediaUrl = String(getMessagePayload(message).url || "").trim();
     if (!mediaUrl) {
@@ -113,40 +212,29 @@ function registerTracksCommand() {
     }
 
     var tracksPath = "/tracks/" + encodeURIComponent(mediaUrl);
-    requestActiveServerPath(tracksPath, function(error, status) {
-      if (error) {
-        respond(message, buildErrorPayload(error, {
-          proxiedPath: tracksPath
-        }));
-        return;
-      }
 
-      if (!status || status.statusCode < 200 || status.statusCode >= 300) {
-        var statusCode = status ? status.statusCode || 0 : 0;
-        respond(message, buildErrorPayload("Track request failed with HTTP " + statusCode, {
-          proxiedPath: tracksPath,
-          statusCode: statusCode,
-          rawBody: status ? status.body || "" : ""
-        }));
-        return;
-      }
+    if (runtimeState.error) {
+      respond(message, buildTracksFallbackPayload(runtimeState.error, tracksPath, null));
+      return;
+    }
 
-      try {
-        var tracks = JSON.parse(status.body || "[]");
-        respond(message, Object.assign(buildBasePayload(), {
-          url: "http://127.0.0.1:" + status.port,
-          proxiedPath: tracksPath,
-          statusCode: status.statusCode,
-          tracks: Array.isArray(tracks) ? tracks : []
-        }));
-      } catch (parseError) {
-        respond(message, buildErrorPayload(parseError, {
-          proxiedPath: tracksPath,
-          statusCode: status.statusCode,
-          rawBody: status.body || ""
-        }));
+    requestActiveServerPath(
+      tracksPath,
+      {
+        probeTimeoutMs: HEALTH_REQUEST_TIMEOUT_MS,
+        requestTimeoutMs: TRACK_REQUEST_TIMEOUT_MS,
+        readyTimeoutMs: READY_WAIT_TIMEOUT_MS,
+        pollIntervalMs: READY_POLL_INTERVAL_MS
+      },
+      function(error, trackStatus, readyStatus) {
+        if (error) {
+          respond(message, buildTracksFallbackPayload(error, tracksPath, readyStatus || trackStatus));
+          return;
+        }
+
+        respondWithTracks(message, tracksPath, trackStatus, readyStatus);
       }
-    });
+    );
   });
 }
 
