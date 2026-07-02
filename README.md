@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="assets/brand/app_logo_wordmark.png" alt="NuvioTV Web" width="300" />
+  <img src="icon.png" alt="NuvioTV Web" width="300" />
   <br />
   <br />
 
