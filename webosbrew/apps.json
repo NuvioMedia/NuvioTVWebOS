@@ -21,9 +21,9 @@
         "rootRequired": false,
         "ipkUrl": "https://github.com/NuvioMedia/NuvioWeb/releases/download/0.3.10-beta/NuvioTV-webOS-0.3.10-beta.ipk",
         "ipkHash": {
-          "sha256": "82fc82d6bbf4e9789419e90447523140d4aad8aa6561faf9f4e618027fc37069"
+          "sha256": "84900b489d8856504f168929c97991e74ffc47a7ed677aa6a08033fd52b3e31f"
         },
-        "ipkSize": 3428458
+        "ipkSize": 3429498
       },
       "pool": "main",
       "shortDescription": "Locally packaged LG webOS build for Nuvio TV."
