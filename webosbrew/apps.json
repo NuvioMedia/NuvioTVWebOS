@@ -12,18 +12,18 @@
       "iconUri": "https://raw.githubusercontent.com/NuvioMedia/NuvioTVWebOS/main/icon.png",
       "manifest": {
         "id": "space.nuvio.webos",
-        "version": "1.3.11",
+        "version": "1.4.0",
         "type": "web",
         "title": "Nuvio TV",
         "appDescription": "Locally packaged LG webOS build for Nuvio TV.",
         "iconUri": "https://raw.githubusercontent.com/NuvioMedia/NuvioTVWebOS/main/icon.png",
         "sourceUrl": "https://github.com/NuvioMedia/NuvioWeb",
         "rootRequired": false,
-        "ipkUrl": "https://github.com/NuvioMedia/NuvioTVSmart/releases/download/1.3.11/NuvioTV-webOS-1.3.11.ipk",
+        "ipkUrl": "https://github.com/NuvioMedia/NuvioTVSmart/releases/download/1.4.0/NuvioTV-webOS-1.4.0.ipk",
         "ipkHash": {
-          "sha256": "20946fc9d82b1d525f708b9fb8a166446ea8677a2db4ccc8e3bdcd75a31ea9e3"
+          "sha256": "d35beb499955068cc5f2333591765f52e963fe7afeef990f89eb892fa94dc9ca"
         },
-        "ipkSize": 8133448
+        "ipkSize": 8138006
       },
       "pool": "main",
       "shortDescription": "Locally packaged LG webOS build for Nuvio TV."
